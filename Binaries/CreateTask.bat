@@ -1,0 +1,1 @@
+schtasks /create /xml "%~dp0NBCheckTask.xml" /tn "\Netbird Public IP Checker Background Task" /ru "SYSTEM"

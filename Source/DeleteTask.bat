@@ -1,0 +1,1 @@
+schtasks /delete /tn "\Netbird Public IP Checker Background Task" /f
