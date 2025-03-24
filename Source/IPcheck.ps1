@@ -1,3 +1,8 @@
+#NetbirdIPCheck by SpanishDexter
+#Version 1.01
+#https://github.com/SpanishDexter
+#https://www.jdsoft.rocks
+
 #set script path
 $scriptPath = split-path -parent $MyInvocation.MyCommand.Definition
 
@@ -14,6 +19,27 @@ Where-Object {$_.GetFileSystemInfos().Count -eq 0} |
 Remove-Item -Force
 #-----------------------------------------------------------------------------------------------------------
 
+#Check if netbird service is running
+#if netbird is not running, exit the script
+
+$serviceName = "Netbird"
+$service = Get-Service -Name $serviceName
+if ($service.Status -eq "Running") {
+    Write-Host "Service '$serviceName' is running."
+} else {
+    Write-Host "Service '$serviceName' is not running. Exiting script. Status: $($service.Status)"
+    
+    #stop NetbirdPublicIPCheckerPass process
+    $processName = "NetbirdPublicIPCheckerPass"
+        if (Get-Process -Name $processName -ErrorAction SilentlyContinue) {
+            Write-Host "Process '$processName' is running. Stopping process since netbird service is not running."
+            Stop-Process -Name  $processName
+            }
+    #exit script
+    exit
+}
+
+
 #------------------------GET NETBIRD INFORMATION FROM REGISTRY---------------------------------------------
 
 #your Netbird API token
@@ -21,6 +47,12 @@ $APIToken = (Get-ItemProperty "HKLM:\SOFTWARE\NetbirdIPCheck") | Select-Object -
 
 #your Netbird server's full URL with port 33073 for API - example https://netbird.mydomain.com:33073
 $NetbirdURL = (Get-ItemProperty "HKLM:\SOFTWARE\NetbirdIPCheck") | Select-Object -ExpandProperty NetbirdURL
+
+#netbird interface dns server
+$NetbirdDNS = (Get-ItemProperty "HKLM:\SOFTWARE\NetbirdIPCheck") | Select-Object -ExpandProperty NetbirdDNS
+
+#Enable custom DNS on Netbird interface - 1 means Enabled
+$NetbirdInterfaceDNSEnable = (Get-ItemProperty "HKLM:\SOFTWARE\NetbirdIPCheck") | Select-Object -ExpandProperty NetbirdInterfaceDNSEnable
 
 #if any of these variables are blank the script will exit
 
@@ -38,8 +70,24 @@ exit
 
 }
 
+if ($NetbirdInterfaceDNSEnable -eq $null) {
+
+#exit script
+exit
+
+}
+
 #-------------------------------------------------------------------------------------------------------------------------------------
 
+#Set local Netbird DNS if enabled
+
+            #check if $NetbirdInterfaceDNSEnable is set to 1 for enabled - if enabled set DNS from $NetbirdDNS on local wt0 interface
+            if ($NetbirdInterfaceDNSEnable -eq "1") {
+
+            #set DNS server on wt0 to $NetbirdDNS
+            netsh interface ip set dns name="wt0" static $NetbirdDNS
+
+            }
 
 
 #----------------------------------------------------------------------------------------------------------
@@ -156,6 +204,15 @@ $AddressMatch = $BlockedIPRanges -contains $connectionIP
             Stop-Process -Name  $processName
             & "C:\Program Files\Netbird\netbird.exe" down
             & "C:\Program Files\Netbird\netbird.exe" up
+
+            #check if $NetbirdInterfaceDNSEnable is set to 1 for enabled - if enabled set DNS from $NetbirdDNS on local wt0 interface
+            if ($NetbirdInterfaceDNSEnable -eq "1") {
+
+            #set DNS server on wt0 to $NetbirdDNS
+            netsh interface ip set dns name="wt0" static $NetbirdDNS
+
+            }
+
         }
 
     } else {
@@ -173,6 +230,14 @@ $AddressMatch = $BlockedIPRanges -contains $connectionIP
             Write-Host "$processName started."
             & "C:\Program Files\Netbird\netbird.exe" down
             & "C:\Program Files\Netbird\netbird.exe" up
+
+                        #check if $NetbirdInterfaceDNSEnable is set to 1 for enabled - if enabled set DNS from $NetbirdDNS on local wt0 interface
+            if ($NetbirdInterfaceDNSEnable -eq "1") {
+
+            #set DNS server on wt0 to $NetbirdDNS
+            netsh interface ip set dns name="wt0" static $NetbirdDNS
+
+            }
         }
 
     }
