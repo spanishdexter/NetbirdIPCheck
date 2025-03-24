@@ -52,6 +52,10 @@ APIToken - A Netbird server API token, you will need to create a service user wi
 
 NetbirdURL - The URL of your Netbird server. Make sure it is in this format: https://netbird.yourdomain.com:33073. Port 33073 is where the API endpoint lives on self-hosted Netbird servers.
 
+NetbirdDNS - a DNS server of your choosing to set on the wt0 interface Netbird uses. This is to be used when you disable DNS management from the Netbird console.
+
+NetbirdInterfaceDNSEnable - Enable or disable the NetbirdDNS feature in NetbirdIPCheck. This key is required even if you don't use the feature. 1 - is enable, 0 - is disable.
+
 You can set these manually if that's feasible for you, or in an automated fashion using Group Policy, if your running an Active Directory environment or via an RMM solution. You may need to create a script to deploy this in a more automated fashion.
 
 4. in C:\NetBirdIPCheck run CreateTask.bat as Administrator, this will create the "Netbird Public IP Checker Background Task" that automatically starts NetbirdPublicIPCheckerService.exe when Windows starts. This is the EXE that is always running a script to monitor the Netbird server and the posture check for changes to public IP information and will stop and start the Netbird client anytime a change is detected on the server.
